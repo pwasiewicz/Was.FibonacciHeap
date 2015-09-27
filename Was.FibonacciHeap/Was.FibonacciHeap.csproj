@@ -38,6 +38,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EmptyHeapException.cs" />
     <Compile Include="FibonacciHeap.cs" />
     <Compile Include="HeapNode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

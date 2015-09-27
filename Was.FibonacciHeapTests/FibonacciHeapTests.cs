@@ -14,8 +14,8 @@
             heap.Push("a", 2);
             heap.Push("b", 1);
 
-            Assert.AreEqual("b", heap.PopMin().Value);
-            Assert.AreEqual("a", heap.PopMin().Value);
+            Assert.AreEqual("b", heap.Pop().Value);
+            Assert.AreEqual("a", heap.Pop().Value);
         }
 
         [TestMethod]
@@ -28,8 +28,8 @@
 
             heap.DecreaseKey(aNode, 5);
 
-            Assert.AreEqual("a", heap.PopMin().Value);
-            Assert.AreEqual("b", heap.PopMin().Value);
+            Assert.AreEqual("a", heap.Pop().Value);
+            Assert.AreEqual("b", heap.Pop().Value);
         }
 
 
@@ -41,9 +41,17 @@
             heap.Push("a", 20);
             heap.Push("b", 10);
 
-            heap.PopMin();
+            heap.Pop();
             
-            Assert.AreEqual("a", heap.PopMin().Value);
+            Assert.AreEqual("a", heap.Pop().Value);
+        }
+
+        [TestMethod, ExpectedException(typeof (EmptyHeapException))]
+        public void Min_WhenEmptyHeap_ThrowsException()
+        {
+            var heap = new FibonacciHeap<string, int>();
+            // ReSharper disable once UnusedVariable
+            var min = heap.Min;
         }
     }
 }

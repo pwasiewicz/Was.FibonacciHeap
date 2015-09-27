@@ -1,11 +1,27 @@
 ﻿namespace Was.FibonacciHeap
 {
+    using System.Collections;
+    using System.Linq;
+    using System;
     using System.Collections.Generic;
-    using FibonacciHeap;
 
-    public class FibonacciHeap<TValue, TPriority>
+    public interface IFibonacciHeap<TValue, TPriority> : IEnumerable<TValue>
+    {
+        TValue Min { get; }
+
+        HeapNode<TValue, TPriority> Push(TValue value, TPriority priority);
+        HeapNode<TValue, TPriority> Pop();
+
+        void DecreaseKey(HeapNode<TValue, TPriority> entry, TPriority newPriorty);
+
+        bool IsEmpty();
+    }
+
+    public class FibonacciHeap<TValue, TPriority> : IFibonacciHeap<TValue, TPriority>
     {
         private readonly IComparer<TPriority> comparer;
+        private readonly HashSet<HeapNode<TValue, TPriority>> nodes;
+
         private HeapNode<TValue, TPriority> min;
         private int size;
 
@@ -20,6 +36,7 @@
             this.size = 0;
 
             this.comparer = comparer;
+            this.nodes = new HashSet<HeapNode<TValue, TPriority>>();
         }
 
         public HeapNode<TValue, TPriority> Push(TValue value, TPriority priority)
@@ -29,6 +46,8 @@
             this.min = this.Merge(this.min, newNode);
             this.size++;
 
+            this.nodes.Add(newNode);
+
             return newNode;
         }
 
@@ -36,7 +55,7 @@
         {
             get
             {
-                if (this.min == null) return default(TValue);
+                if (this.min == null) throw new EmptyHeapException();
 
                 return this.min.Value;
             }
@@ -44,11 +63,12 @@
 
         public bool IsEmpty()
         {
-            return this.min == null;
+            return this.size == 0;
         }
 
-        public HeapNode<TValue, TPriority> PopMin()
+        public HeapNode<TValue, TPriority> Pop()
         {
+            if (this.IsEmpty()) throw new EmptyHeapException();
             this.size--;
 
             var minElem = this.min;
@@ -76,11 +96,12 @@
 
             this.min = this.Merge(this.min, minElem.Child);
 
-            var tree = new List<HeapNode<TValue, TPriority>>();
+            var tree = new Dictionary<int, HeapNode<TValue, TPriority>>();
             var toVisit = new LinkedList<HeapNode<TValue, TPriority>>();
 
             if (this.min == null)
             {
+                this.nodes.Remove(minElem);
                 return minElem;
             }
             
@@ -97,9 +118,9 @@
                 var curr = globalCurr;
                 while (true)
                 {
-                    while (curr.Degree >= tree.Count)
+                    if (!tree.ContainsKey(curr.Degree))
                     {
-                        tree.Add(null);
+                        tree.Add(curr.Degree, null);
                     }
 
                     if (tree[curr.Degree] == null)
@@ -132,13 +153,17 @@
                 }
             }
 
+            this.nodes.Remove(minElem);
             return minElem;
         }
 
         public void DecreaseKey(HeapNode<TValue, TPriority> entry, TPriority newPriorty)
         {
+            if (!this.nodes.Contains(entry)) throw new ArgumentException("Node belongs to other heap", nameof(entry));
+
             entry.Priority = newPriorty;
-            if (entry.Parent != null && this.comparer.Compare(entry.Priority, entry.Parent.Priority) <= 0)
+            if (entry.Parent != null
+                    && this.comparer.Compare(entry.Priority, entry.Parent.Priority) <= 0)
             {
                 this.Cut(entry);
             }
@@ -148,6 +173,15 @@
             }
         }
 
+        public IEnumerator<TValue> GetEnumerator()
+        {
+            return this.nodes.Select(n => n.Value).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
         private void Cut(HeapNode<TValue, TPriority> entry)
         {
@@ -165,14 +199,7 @@
 
             if (entry.Parent.Child == entry)
             {
-                if (entry.Next != entry)
-                {
-                    entry.Parent.Child = entry.Next;
-                }
-                else
-                {
-                    entry.Parent.Child = null;
-                }
+                entry.Parent.Child = entry.Next != entry ? entry.Next : null;
             }
 
             entry.Parent.Degree--;
@@ -202,7 +229,7 @@
                 return first;
             }
 
-            if (first == null && second != null)
+            if (first == null)
             {
                 return second;
             }
