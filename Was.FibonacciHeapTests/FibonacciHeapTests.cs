@@ -1,4 +1,6 @@
-﻿namespace Was.FibonacciHeapTests
+﻿using System.Collections.Generic;
+
+namespace Was.FibonacciHeapTests
 {
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using FibonacciHeap;
@@ -46,12 +48,39 @@
             Assert.AreEqual("a", heap.Pop().Value);
         }
 
+        [TestMethod]
+        public void Pop_OwnComparer_ReturnsProperMin()
+        {
+            var heap = new FibonacciHeap<string, int>(new ReversedIntComparer());
+
+            heap.Push("a", 20);
+            heap.Push("b", 10);
+
+            Assert.AreEqual("a", heap.Min);
+        }
+        
+
         [TestMethod, ExpectedException(typeof (EmptyHeapException))]
         public void Min_WhenEmptyHeap_ThrowsException()
         {
             var heap = new FibonacciHeap<string, int>();
             // ReSharper disable once UnusedVariable
             var min = heap.Min;
+        }
+
+        private class ReversedIntComparer : IComparer<int>
+        {
+            private readonly IComparer<int> defaultComparer;
+
+            public ReversedIntComparer()
+            {
+                this.defaultComparer = Comparer<int>.Default;
+            }
+
+            public int Compare(int x, int y)
+            {
+                return (-1)*this.defaultComparer.Compare(x, y);
+            }
         }
     }
 }
